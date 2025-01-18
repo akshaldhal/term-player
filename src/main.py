@@ -1,6 +1,6 @@
 import os
 import sys
-EXECUTABLE_NAME = 'term-player'
+EXECUTABLE_NAME : str = 'term-player'
 
 def __preprocess_video__(filepath : str) -> None:
   # convert video to frames and save array of downscaled pixel values from each frame to a file
@@ -18,7 +18,7 @@ def main(filepath : str) -> None:
 
 if __name__ == '__main__':
   try:
-    filepath = sys.argv[1]
+    filepath : str = sys.argv[1]
   except IndexError:
     print(f'Usage: {EXECUTABLE_NAME} <filepath>')
     sys.exit(1)
