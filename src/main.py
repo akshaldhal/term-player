@@ -3,7 +3,7 @@ import sys
 import cv2
 import time
 EXECUTABLE_NAME : str = 'term-player'
-HEIGHT = 64
+HEIGHT = 32
 
 def __print_frames(frames : list, fps : float) -> None:
   for frame in frames:
@@ -26,7 +26,7 @@ def __preprocess_video__(filepath : str) -> None:
   _height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
   fps = cap.get(cv2.CAP_PROP_FPS)
   height = HEIGHT
-  width = int(_width * height / _height)
+  width = round(_width * height / _height)
   # frame_count = 0
   # output_dir = 'frames.temp'
   # os.makedirs(output_dir, exist_ok=True)
