@@ -2,10 +2,21 @@ import os
 import sys
 import cv2
 import time
+import pickle
 EXECUTABLE_NAME : str = 'term-player'
-HEIGHT = 32
 
-def __print_frames(frames : list, fps : float) -> None:
+def __load_preprocessed(filepath: str) -> tuple:
+  if not os.path.isfile(filepath):
+    print(f'File {filepath} does not exist')
+    sys.exit(1)
+  with open(filepath, 'rb') as f:
+    data = pickle.load(f)
+  return data
+
+def __print_frames(filepath : str) -> None:
+  frames = __load_preprocessed(filepath)
+  fps = frames[0]
+  frames = frames[1:]
   for frame in frames:
     for row in frame:
       for pixel in row:
@@ -17,7 +28,7 @@ def __print_frames(frames : list, fps : float) -> None:
     time.sleep(1 / fps)
     print("\033[H", end="")
 
-def __preprocess_video__(filepath : str) -> None:
+def __preprocess_video__(filepath : str, height : int) -> None:
   cap = cv2.VideoCapture(filepath)
   if not cap.isOpened():
     print('Error: Could not open video')
@@ -25,30 +36,29 @@ def __preprocess_video__(filepath : str) -> None:
   _width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
   _height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
   fps = cap.get(cv2.CAP_PROP_FPS)
-  height = HEIGHT
   width = round(_width * height / _height)
-  # frame_count = 0
-  # output_dir = 'frames.temp'
-  # os.makedirs(output_dir, exist_ok=True)
+  output_filename = f'{filepath[:-4]}.tppm'
   frame_array = []
+  frame_array.append(fps)
   while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
       break
     frame = cv2.resize(frame, (width, height))
-    frame_array.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-    # frame_filename = os.path.join(output_dir, f"frame_{frame_count:04d}.jpg")
-    # cv2.imwrite(frame_filename, frame)
-    # frame_count += 1
+    frame_array.append(tuple(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
   cap.release()
-  __print_frames(frame_array, fps)  
+  frame_array = tuple(frame_array)
+  with open(output_filename, 'wb') as f:
+    pickle.dump(frame_array, f)
 
-def main(filepath : str) -> None:
+def main(filepath : str, height : int) -> None:
+  if not os.path.isfile(filepath):
+    print(f'File {filepath} does not exist')
+    sys.exit(1)
   if filepath.endswith('.mp4'):
-    if not os.path.isfile(filepath):
-      print(f'File {filepath} does not exist')
-      sys.exit(1)
-    __preprocess_video__(filepath)
+    __preprocess_video__(filepath, height)
+  elif filepath.endswith('.tppm'):
+    __print_frames(filepath)
   else:
     print('Only mp4 files are supported for now')
     sys.exit(1)
@@ -56,12 +66,11 @@ def main(filepath : str) -> None:
 if __name__ == '__main__':
   try:
     filepath : str = sys.argv[1]
+    if len(sys.argv) > 2:
+      HEIGHT = int(sys.argv[2])
+    else:
+      HEIGHT = 32
   except IndexError:
-    print(f'Usage: {EXECUTABLE_NAME} <filepath>')
+    print(f'Usage: {EXECUTABLE_NAME} <filepath> <height : optional>')
     sys.exit(1)
-  main(filepath)
-
-
-#for color in {0..255}; do
-#    echo -e "\e[48;5;${color}m  \e[0m"
-#done
+  main(filepath, HEIGHT)
